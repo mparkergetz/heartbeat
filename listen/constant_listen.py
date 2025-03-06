@@ -6,13 +6,15 @@ import adafruit_ssd1306
 import board
 import atexit
 
+HEARTBEAT_TIMEOUT = 2
+
 class Display:
     def __init__(self):
         self.width = 128
         self.height = 64
         self.font = ImageFont.load_default()
-        self.enabled = True  
-        #self.ip = self.get_ip_address()
+        self.enabled = True
+        self.last_heartbeat = time.time()
         i2c = board.I2C()
         try:
             self._disp = adafruit_ssd1306.SSD1306_I2C(self.width, self.height, i2c)
@@ -41,11 +43,13 @@ def on_connect(client, userdata, flags, rc, properties):
     if rc == 0:
         if userdata.enabled:
             userdata.show_message("MQTT Active")
+        client.subscribe("heartbeat")
     else:
         userdata.show_message(f"MQTT Error {rc}")
 
 def on_message(client, userdata, msg):
     if msg.topic == "heartbeat":
+        userdata.last_heartbeat = time.time()
         userdata.show_message("Connected")
 
 def on_disconnect(client, userdata, rc, properties=None):
@@ -63,6 +67,8 @@ def main():
 
     while True:
         time.sleep(1)
+        if time.time() - display.last_heartbeat > HEARTBEAT_TIMEOUT:
+            display.show_message("Disconnected")
 
 if __name__ == "__main__":
     main()
