@@ -2,6 +2,7 @@ import paho.mqtt.client as mqtt
 import time
 from datetime import datetime
 import logging
+import os
 
 HUB_IP = "192.168.2.1"  # Change to your hub Pi’s IP
 TOPIC = "sensor/heartbeat"
@@ -11,10 +12,15 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
+def is_camera_running():
+    """Check if the camera script is running locally."""
+    return any("control.py" in line for line in os.popen("ps aux"))
+
 while True:
     timestamp = datetime.now()
-    message = f"{SENSOR_NAME},{timestamp}"
-    
+    camera_status = "true" if is_camera_running() else "false"
+    message = f"{SENSOR_NAME},{timestamp}, {camera_status}"
+
     try:
         client.connect(HUB_IP, 1883, 60)
         client.publish(TOPIC, message)

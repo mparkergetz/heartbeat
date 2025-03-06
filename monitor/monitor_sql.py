@@ -61,7 +61,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS sensor_status (
             sensor_name TEXT PRIMARY KEY,
             last_seen TEXT NOT NULL,
-            sync_status TEXT NOT NULL
+            sync_status TEXT NOT NULL,
+            camera_on BOOLEAN NOT NULL DEFAULT 0
         )
     """)
     
@@ -85,20 +86,21 @@ def log_heartbeat(sensor_name, receipt_time, sync_status):
         VALUES (?, ?, ?)
         ON CONFLICT(sensor_name) DO UPDATE SET 
             last_seen = excluded.last_seen,
-            sync_status = excluded.sync_status
-    """, (sensor_name, receipt_time, sync_status))
+            sync_status = excluded.sync_status,
+            camera_on = excluded.camera_on
+    """, (sensor_name, receipt_time, sync_status, camera_on == "true"))
     
     conn.commit()
     conn.close()
 
     if sensor_name in sensor_warnings and sync_status == "good":
-        logging.info(f"✅ {sensor_name} has recovered.")
+        logging.info(f"{sensor_name} has recovered.")
         sensor_warnings.pop(sensor_name, None)
 
 def on_message(client, userdata, msg):
     """Handles incoming MQTT messages."""
     message = msg.payload.decode()
-    sensor_name, timestamp_str = message.split(',')
+    sensor_name, timestamp_str, camera_status = message.split(',')
     sensor_time = datetime.fromisoformat(timestamp_str)
     receipt_time = datetime.now()
 
@@ -106,10 +108,10 @@ def on_message(client, userdata, msg):
     sync_status = "good" if drift <= TIME_DRIFT_THRESHOLD else "out of sync"
 
     if sync_status == "out of sync" and sensor_warnings.get(sensor_name) != "out_of_sync":
-        logging.warning(f"⚠ WARNING: {sensor_name} clock is out of sync by {drift} seconds")
+        logging.warning(f"WARNING: {sensor_name} clock is out of sync by {drift} seconds")
         sensor_warnings[sensor_name] = "out_of_sync"
 
-    log_heartbeat(sensor_name, receipt_time.isoformat(), sync_status)
+    log_heartbeat(sensor_name, receipt_time.isoformat(), sync_status, camera_status)
 
 def check_sensor_status():
     while True:
@@ -130,11 +132,11 @@ def check_sensor_status():
             gap = (hub_time - last_seen).total_seconds()
 
             if gap > TIMEOUT_THRESHOLD and sync_status == "good" and sensor_warnings.get(sensor_name) != "down":
-                logging.warning(f"⚠ WARNING: {sensor_name} is DOWN! Last heartbeat received at {last_seen}.")
+                logging.warning(f"WARNING: {sensor_name} is DOWN! Last heartbeat received at {last_seen}.")
                 sensor_warnings[sensor_name] = "down"
 
             elif gap <= TIMEOUT_THRESHOLD and sensor_warnings.get(sensor_name) == "down":
-                logging.info(f"✅ {sensor_name} has recovered from being down.")
+                logging.info(f"{sensor_name} has recovered from being down.")
                 sensor_warnings.pop(sensor_name, None)
 
         time.sleep(10)
