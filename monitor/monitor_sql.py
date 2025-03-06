@@ -71,7 +71,7 @@ def init_db():
 
 init_db()
 
-def log_heartbeat(sensor_name, receipt_time, sync_status):
+def log_heartbeat(sensor_name, receipt_time, sync_status, camera_on):
     """Log the heartbeat receipt time and update the sensor status."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -82,8 +82,8 @@ def log_heartbeat(sensor_name, receipt_time, sync_status):
     """, (sensor_name, receipt_time))
 
     cursor.execute("""
-        INSERT INTO sensor_status (sensor_name, last_seen, sync_status)
-        VALUES (?, ?, ?)
+        INSERT INTO sensor_status (sensor_name, last_seen, sync_status, camera_on)
+        VALUES (?, ?, ?, ?)
         ON CONFLICT(sensor_name) DO UPDATE SET 
             last_seen = excluded.last_seen,
             sync_status = excluded.sync_status,
