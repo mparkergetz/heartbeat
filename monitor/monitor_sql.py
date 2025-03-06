@@ -13,19 +13,35 @@ from threading import Thread
 import sys
 import logging
 
+## REMOVE WHEN INTEGRATE WITH BEE_CAM:
+import  configparser
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+# REPLACE WITH:
+# from .config import Config
+# config = Config()
+# unit_name =config['general']['name']
+
+TIMEOUT_THRESHOLD = config.getint('communication', 'timeout_threshold')
+TIME_DRIFT_THRESHOLD = config.getint('communication', 'time_drift_threshold')
+STARTUP_GRACE_PERIOD = config.getint('communication', 'startup_grace_period')
+startup_time = datetime.now()
+
 DEBUG_MODE = False
 
 HUB_IP = "192.168.2.1"
 TOPIC = "sensor/heartbeat"
 
-TIMEOUT_THRESHOLD = 60
-TIME_DRIFT_THRESHOLD = 600 
+#TIMEOUT_THRESHOLD = 60
+#TIME_DRIFT_THRESHOLD = 600 
 
 log_level = logging.DEBUG if DEBUG_MODE else logging.INFO
 logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s", stream=sys.stdout)
 logging.info("Heartbeat monitor started")
 
-DB_PATH = "/home/pi/heartbeat_monitor/heartbeats.db"
+DB_PATH = config['communication']['db_location']
+print(DB_PATH)
 
 sensor_warnings = {}
 
@@ -97,6 +113,10 @@ def on_message(client, userdata, msg):
 
 def check_sensor_status():
     while True:
+        if (datetime.now() - startup_time).total_seconds() < STARTUP_GRACE_PERIOD:
+            time.sleep(10)
+            continue
+
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT sensor_name, last_seen, sync_status FROM sensor_status")
