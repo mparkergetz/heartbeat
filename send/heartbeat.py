@@ -4,7 +4,7 @@ from datetime import datetime
 import logging
 import os
 
-HUB_IP = "192.168.2.1"  # Change to your hub Pi’s IP
+HUB_IP = "192.168.2.1"
 TOPIC = "sensor/heartbeat"
 SENSOR_NAME = "sensor_1"
 
@@ -13,7 +13,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
 def is_camera_running():
-    """Check if the camera script is running locally."""
     return any("control.py" in line for line in os.popen("ps aux"))
 
 while True:
