@@ -17,7 +17,7 @@ def is_camera_running():
 
 while True:
     timestamp = datetime.now()
-    camera_status = "true" if is_camera_running() else "false"
+    camera_status = "1" if is_camera_running() else "0"
     message = f"{SENSOR_NAME},{timestamp}, {camera_status}"
 
     try:

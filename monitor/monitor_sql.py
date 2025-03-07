@@ -100,7 +100,7 @@ def log_heartbeat(sensor_name, receipt_time, sync_status, camera_on):
 def on_message(client, userdata, msg):
     """Handles incoming MQTT messages."""
     message = msg.payload.decode()
-    sensor_name, timestamp_str, camera_status = message.split(',')
+    sensor_name, timestamp_str, camera_on = message.split(',')
     sensor_time = datetime.fromisoformat(timestamp_str)
     receipt_time = datetime.now()
 
@@ -111,7 +111,7 @@ def on_message(client, userdata, msg):
         logging.warning(f"WARNING: {sensor_name} clock is out of sync by {drift} seconds")
         sensor_warnings[sensor_name] = "out_of_sync"
 
-    log_heartbeat(sensor_name, receipt_time.isoformat(), sync_status, camera_status)
+    log_heartbeat(sensor_name, receipt_time.isoformat(), sync_status, camera_on)
 
 def check_sensor_status():
     while True:
