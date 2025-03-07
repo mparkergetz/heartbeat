@@ -17,7 +17,7 @@ def is_camera_running():
     return any("control.py" in line for line in os.popen("ps aux"))
 
 while True:
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now().isoformat()
     camera_status = 1 if is_camera_running() else 0
     message = json.dumps({"name": SENSOR_NAME,"timestamp": timestamp,"cam_on": camera_status})
 
