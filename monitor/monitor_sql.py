@@ -12,6 +12,7 @@ import time
 from threading import Thread
 import sys
 import logging
+import json
 
 ## REMOVE WHEN INTEGRATE WITH BEE_CAM:
 import  configparser
@@ -88,8 +89,8 @@ def log_heartbeat(sensor_name, receipt_time, sync_status, camera_on):
             last_seen = excluded.last_seen,
             sync_status = excluded.sync_status,
             camera_on = excluded.camera_on
-    """, (sensor_name, receipt_time, sync_status, camera_on == "1"))
-    
+    """, (sensor_name, receipt_time, sync_status, camera_on == 1))
+
     conn.commit()
     conn.close()
 
@@ -99,8 +100,11 @@ def log_heartbeat(sensor_name, receipt_time, sync_status, camera_on):
 
 def on_message(client, userdata, msg):
     """Handles incoming MQTT messages."""
-    message = msg.payload.decode()
-    sensor_name, timestamp_str, camera_on = message.split(',')
+    message = json.loads(msg.payload.decode())
+    sensor_name = message["name"]
+    timestamp_str = message["timestamp"]
+    camera_on = int(message["cam_on"]
+    logging.info(f'{camera_on}, {type(camera_on)}')
     sensor_time = datetime.fromisoformat(timestamp_str)
     receipt_time = datetime.now()
 

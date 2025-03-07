@@ -3,10 +3,11 @@ import time
 from datetime import datetime
 import logging
 import os
+import json
 
 HUB_IP = "192.168.2.1"
 TOPIC = "sensor/heartbeat"
-SENSOR_NAME = "sensor_1"
+SENSOR_NAME = "cam01"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -17,8 +18,8 @@ def is_camera_running():
 
 while True:
     timestamp = datetime.now()
-    camera_status = "1" if is_camera_running() else "0"
-    message = f"{SENSOR_NAME},{timestamp}, {camera_status}"
+    camera_status = 1 if is_camera_running() else 0
+    message = json.dumps({"name": {SENSOR_NAME},"timestamp": {timestamp},"cam_on": {camera_status}"
 
     try:
         client.connect(HUB_IP, 1883, 60)
