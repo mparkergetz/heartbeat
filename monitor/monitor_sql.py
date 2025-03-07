@@ -88,7 +88,7 @@ def log_heartbeat(sensor_name, receipt_time, sync_status, camera_on):
             last_seen = excluded.last_seen,
             sync_status = excluded.sync_status,
             camera_on = excluded.camera_on
-    """, (sensor_name, receipt_time, sync_status, camera_on == "true"))
+    """, (sensor_name, receipt_time, sync_status, camera_on == "1"))
     
     conn.commit()
     conn.close()
